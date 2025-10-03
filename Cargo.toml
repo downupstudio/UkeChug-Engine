@@ -10,3 +10,4 @@ url = "2.5"
 image = "0.25"
 imageproc = "0.25"
 ab_glyph = "0.2"
+clap = { version = "4.0", features = ["derive"] }
