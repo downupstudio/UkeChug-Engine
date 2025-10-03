@@ -1,3 +1,7 @@
+pub mod box_model;
+
+pub use box_model::{LayoutBox, BoxType, Dimensions, Rect, EdgeSizes, layout_tree};
+
 pub struct LayoutEngine;
 
 impl LayoutEngine {

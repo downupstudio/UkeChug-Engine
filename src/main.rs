@@ -9,7 +9,7 @@ use html::HTMLParser;
 use css::CSSParser;
 use dom::DOMTree;
 use style::{StyleEngine, style_tree};
-use layout::LayoutEngine;
+use layout::{LayoutEngine, layout_tree, Dimensions, Rect};
 use render::RenderEngine;
 
 fn main() {
@@ -21,20 +21,20 @@ fn main() {
     println!("Status: Initializing...");
     println!();
     
-    test_style_matching();
+    test_layout();
     
     println!();
     println!("Engine initialized successfully!");
     println!("========================================");
 }
 
-fn test_style_matching() {
-    println!("Testing Style Matching:");
+fn test_layout() {
+    println!("Testing Layout Engine:");
     println!();
     
-    let test_html = "<html><body><div id=\"main\" class=\"container\"><h1>Hello World</h1><p class=\"highlight\">This is a test.</p></div></body></html>";
+    let test_html = "<html><body><div id=\"main\"><h1>Hello World</h1><p>This is a paragraph with some text.</p><div><span>Nested content here</span></div></div></body></html>";
     
-    let test_css = "h1 { color: #ff0000; font-size: 24px; display: block; } p { color: #333333; font-size: 16px; display: block; } .highlight { background: #ffff00; } #main { width: 800px; display: block; } .container { margin: 20px; }";
+    let test_css = "body { display: block; margin: 0px; } div { display: block; padding: 10px; margin: 5px; } h1 { display: block; font-size: 24px; margin: 10px; } p { display: block; margin: 10px; padding: 5px; } span { display: inline; }";
     
     let mut html_parser = HTMLParser::new();
     let root_node = html_parser.parse(test_html);
@@ -45,39 +45,52 @@ fn test_style_matching() {
     println!("  [Style] Creating styled tree...");
     let styled_root = style_tree(&root_node, &stylesheet);
     
-    println!("  [Style] Styled tree created!");
+    println!("  [Layout] Creating layout tree...");
+    
+    let mut viewport: Dimensions = Default::default();
+    viewport.content.width = 800.0;
+    viewport.content.height = 600.0;
+    
+    let layout_root = layout_tree(&styled_root, viewport);
+    
+    println!("  [Layout] Layout tree created!");
     println!();
     
-    print_styled_tree(&styled_root, 0);
+    print_layout_tree(&layout_root, 0);
     
     println!();
-    println!("✓ Style matching complete!");
+    println!("✓ Layout calculation complete!");
 }
 
-fn print_styled_tree(node: &style::StyledNode, indent: usize) {
+fn print_layout_tree(layout_box: &layout::LayoutBox, indent: usize) {
     let indent_str = "  ".repeat(indent);
     
-    match node.node.node_type {
-        dom::NodeType::Element(ref elem) => {
-            println!("{}Element: <{}>", indent_str, elem.tag_name);
-            
-            if !node.specified_values.is_empty() {
-                println!("{}  Styles:", indent_str);
-                for (name, value) in &node.specified_values {
-                    println!("{}    {}: {:?}", indent_str, name, value);
-                }
-            }
-            
-            for child in &node.children {
-                print_styled_tree(child, indent + 1);
+    let box_type_name = match layout_box.box_type {
+        layout::BoxType::BlockNode(node) => {
+            match node.node.node_type {
+                dom::NodeType::Element(ref elem) => format!("Block <{}>", elem.tag_name),
+                _ => "Block".to_string(),
             }
         }
-        dom::NodeType::Text(ref text) => {
-            let trimmed = text.trim();
-            if !trimmed.is_empty() {
-                println!("{}Text: \"{}\"", indent_str, trimmed);
+        layout::BoxType::InlineNode(node) => {
+            match node.node.node_type {
+                dom::NodeType::Element(ref elem) => format!("Inline <{}>", elem.tag_name),
+                _ => "Inline".to_string(),
             }
         }
-        dom::NodeType::Comment(_) => {}
+        layout::BoxType::AnonymousBlock => "AnonymousBlock".to_string(),
+    };
+    
+    let d = &layout_box.dimensions;
+    println!("{}{}", indent_str, box_type_name);
+    println!("{}  Content: x={:.1}, y={:.1}, w={:.1}, h={:.1}", 
+        indent_str, d.content.x, d.content.y, d.content.width, d.content.height);
+    println!("{}  Padding: l={:.1}, r={:.1}, t={:.1}, b={:.1}", 
+        indent_str, d.padding.left, d.padding.right, d.padding.top, d.padding.bottom);
+    println!("{}  Margin: l={:.1}, r={:.1}, t={:.1}, b={:.1}", 
+        indent_str, d.margin.left, d.margin.right, d.margin.top, d.margin.bottom);
+    
+    for child in &layout_box.children {
+        print_layout_tree(child, indent + 1);
     }
 }
