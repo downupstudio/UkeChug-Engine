@@ -50,6 +50,13 @@ impl<'a> ImageRenderer<'a> {
     }
 
     fn render_borders(&mut self, layout_box: &LayoutBox) {
+        let border_color = self.get_border_color(layout_box);
+        let border_width = self.get_border_width(layout_box);
+
+        if border_width == 0 {
+            return;
+        }
+
         let d = layout_box.dimensions;
         let rect = d.border_box();
 
@@ -59,9 +66,19 @@ impl<'a> ImageRenderer<'a> {
         let height = rect.height as i32;
 
         if width > 0 && height > 0 {
-            let image_rect = Rect::at(x, y).of_size(width as u32, height as u32);
-            let border_color = Rgba([0, 0, 0, 255]);
-            draw_hollow_rect_mut(&mut self.image, image_rect, border_color);
+            for i in 0..border_width {
+                let offset = i as i32;
+                let adjusted_x = x + offset;
+                let adjusted_y = y + offset;
+                let adjusted_width = (width - offset * 2).max(1) as u32;
+                let adjusted_height = (height - offset * 2).max(1) as u32;
+
+                if adjusted_width > 0 && adjusted_height > 0 {
+                    let image_rect = Rect::at(adjusted_x, adjusted_y)
+                        .of_size(adjusted_width, adjusted_height);
+                    draw_hollow_rect_mut(&mut self.image, image_rect, border_color);
+                }
+            }
         }
     }
 
@@ -70,11 +87,18 @@ impl<'a> ImageRenderer<'a> {
             for child_node in &style_node.node.children {
                 if let NodeType::Text(text) = &child_node.node_type {
                     let d = layout_box.dimensions;
-                    let x = (d.content.x + d.padding.left + 5.0) as i32;
-                    let y = (d.content.y + d.padding.top + 5.0) as i32;
+                    let border_width = self.get_border_width(layout_box) as f32;
                     
-                    let text_color = Rgba([0, 0, 0, 255]);
-                    let font_size = 16.0;
+                    let content_box_x = d.content.x + border_width + d.padding.left;
+                    let content_box_y = d.content.y + border_width + d.padding.top;
+                    let content_box_height = d.content.height;
+                    
+                    let font_size = self.get_font_size(style_node);
+                    
+                    let x = (content_box_x + 10.0) as i32;
+                    let y = (content_box_y + (content_box_height / 2.0) - (font_size / 2.0)) as i32;
+                    
+                    let text_color = self.get_text_color(style_node);
                     
                     self.text_drawer.draw_text(&mut self.image, text.trim(), x, y, font_size, text_color);
                 }
@@ -85,16 +109,54 @@ impl<'a> ImageRenderer<'a> {
     fn get_background_color(&self, layout_box: &LayoutBox) -> Rgba<u8> {
         match &layout_box.box_type {
             BoxType::BlockNode(style_node) | BoxType::InlineNode(style_node) => {
-                if let Some(value) = style_node.value("background") {
+                if let Some(value) = style_node.value("background-color") {
                     return self.value_to_color(value);
                 }
-                if let Some(value) = style_node.value("background-color") {
+                if let Some(value) = style_node.value("background") {
                     return self.value_to_color(value);
                 }
             }
             _ => {}
         }
-        Rgba([240, 240, 240, 255])
+        Rgba([255, 255, 255, 255])
+    }
+
+    fn get_border_color(&self, layout_box: &LayoutBox) -> Rgba<u8> {
+        match &layout_box.box_type {
+            BoxType::BlockNode(style_node) | BoxType::InlineNode(style_node) => {
+                if let Some(value) = style_node.value("border-color") {
+                    return self.value_to_color(value);
+                }
+            }
+            _ => {}
+        }
+        Rgba([0, 0, 0, 255])
+    }
+
+    fn get_border_width(&self, layout_box: &LayoutBox) -> u32 {
+        match &layout_box.box_type {
+            BoxType::BlockNode(style_node) | BoxType::InlineNode(style_node) => {
+                if let Some(Value::Length(width, _)) = style_node.value("border-width") {
+                    return (*width as u32).max(0);
+                }
+            }
+            _ => {}
+        }
+        1
+    }
+
+    fn get_text_color(&self, style_node: &crate::style::StyledNode) -> Rgba<u8> {
+        if let Some(value) = style_node.value("color") {
+            return self.value_to_color(value);
+        }
+        Rgba([0, 0, 0, 255])
+    }
+
+    fn get_font_size(&self, style_node: &crate::style::StyledNode) -> f32 {
+        if let Some(Value::Length(size, _)) = style_node.value("font-size") {
+            return *size;
+        }
+        16.0
     }
 
     fn value_to_color(&self, value: &Value) -> Rgba<u8> {
@@ -107,9 +169,12 @@ impl<'a> ImageRenderer<'a> {
                 "green" => Rgba([0, 255, 0, 255]),
                 "blue" => Rgba([0, 0, 255, 255]),
                 "yellow" => Rgba([255, 255, 0, 255]),
-                _ => Rgba([240, 240, 240, 255]),
+                "gray" => Rgba([128, 128, 128, 255]),
+                "lightgray" => Rgba([211, 211, 211, 255]),
+                "darkgray" => Rgba([169, 169, 169, 255]),
+                _ => Rgba([255, 255, 255, 255]),
             },
-            _ => Rgba([240, 240, 240, 255]),
+            _ => Rgba([255, 255, 255, 255]),
         }
     }
 

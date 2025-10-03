@@ -2,7 +2,6 @@ pub mod text_renderer;
 pub mod image_renderer;
 pub mod text_drawer;
 
-pub use text_renderer::TextRenderer;
 pub use image_renderer::ImageRenderer;
 
 pub struct RenderEngine;

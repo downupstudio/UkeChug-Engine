@@ -7,10 +7,9 @@ mod render;
 
 use html::HTMLParser;
 use css::CSSParser;
-use dom::DOMTree;
-use style::{StyleEngine, style_tree};
-use layout::{LayoutEngine, layout_tree, Dimensions, Rect};
-use render::{RenderEngine, TextRenderer, ImageRenderer};
+use style::style_tree;
+use layout::{layout_tree, Dimensions};
+use render::ImageRenderer;
 
 fn main() {
     println!("========================================");
@@ -21,20 +20,20 @@ fn main() {
     println!("Status: Initializing...");
     println!();
     
-    test_image_rendering();
+    test_enhanced_rendering();
     
     println!();
     println!("Engine initialized successfully!");
     println!("========================================");
 }
 
-fn test_image_rendering() {
-    println!("Testing Image Rendering:");
+fn test_enhanced_rendering() {
+    println!("Testing Enhanced CSS Rendering:");
     println!();
     
-    let test_html = "<html><body><div><h1>Header</h1></div><div><p>Paragraph</p></div></body></html>";
+    let test_html = "<html><body><div><h1>Welcome to UkeChug!</h1></div><div><p>This is a paragraph with styled text.</p></div><div><span>Footer text here</span></div></body></html>";
     
-    let test_css = "html { display: block; width: 780px; } body { display: block; width: 700px; background: white; } div { display: block; width: 600px; height: 100px; background: #e0e0e0; margin: 10px; } h1 { display: block; width: 500px; height: 50px; background: #ffcccc; margin: 10px; } p { display: block; width: 500px; height: 50px; background: #ccccff; margin: 10px; }";
+    let test_css = "html { display: block; width: 780px; } body { display: block; width: 700px; background-color: #f5f5f5; } div { display: block; width: 600px; background-color: white; margin: 15px; padding: 20px; border-width: 2px; border-color: #333333; } h1 { display: block; color: #0066cc; font-size: 32px; margin: 10px; } p { display: block; color: #333333; font-size: 18px; margin: 10px; } span { display: block; color: #666666; font-size: 14px; margin: 10px; }";
     
     let mut html_parser = HTMLParser::new();
     let root_node = html_parser.parse(test_html);
@@ -53,7 +52,7 @@ fn test_image_rendering() {
     
     let layout_root = layout_tree(&styled_root, viewport);
     
-    println!("  [Render] Rendering to image...");
+    println!("  [Render] Rendering to image with enhanced CSS...");
     
     let mut image_renderer = ImageRenderer::new(800, 600);
     image_renderer.render(&layout_root);
@@ -64,5 +63,11 @@ fn test_image_rendering() {
     }
     
     println!();
-    println!("✓ Image rendering complete!");
+    println!("✓ Enhanced rendering complete!");
+    println!();
+    println!("Features demonstrated:");
+    println!("  - Custom text colors (blue, gray)");
+    println!("  - Background colors (white boxes on gray)");
+    println!("  - Border colors and widths (dark borders)");
+    println!("  - Multiple font sizes (32px, 18px, 14px)");
 }
