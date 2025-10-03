@@ -1,18 +1,21 @@
 use crate::layout::{LayoutBox, BoxType};
 use crate::dom::NodeType;
 use crate::css::Value;
+use crate::render::text_drawer::TextDrawer;
 use image::{RgbaImage, Rgba};
 use imageproc::drawing::{draw_filled_rect_mut, draw_hollow_rect_mut};
 use imageproc::rect::Rect;
 
-pub struct ImageRenderer {
+pub struct ImageRenderer<'a> {
     image: RgbaImage,
+    text_drawer: TextDrawer<'a>,
 }
 
-impl ImageRenderer {
-    pub fn new(width: u32, height: u32) -> ImageRenderer {
+impl<'a> ImageRenderer<'a> {
+    pub fn new(width: u32, height: u32) -> ImageRenderer<'a> {
         let image = RgbaImage::from_pixel(width, height, Rgba([255, 255, 255, 255]));
-        ImageRenderer { image }
+        let text_drawer = TextDrawer::new();
+        ImageRenderer { image, text_drawer }
     }
 
     pub fn render(&mut self, layout_root: &LayoutBox) {
@@ -22,6 +25,7 @@ impl ImageRenderer {
     fn render_layout_box(&mut self, layout_box: &LayoutBox) {
         self.render_background(layout_box);
         self.render_borders(layout_box);
+        self.render_text(layout_box);
 
         for child in &layout_box.children {
             self.render_layout_box(child);
@@ -58,6 +62,23 @@ impl ImageRenderer {
             let image_rect = Rect::at(x, y).of_size(width as u32, height as u32);
             let border_color = Rgba([0, 0, 0, 255]);
             draw_hollow_rect_mut(&mut self.image, image_rect, border_color);
+        }
+    }
+
+    fn render_text(&mut self, layout_box: &LayoutBox) {
+        if let BoxType::BlockNode(style_node) | BoxType::InlineNode(style_node) = &layout_box.box_type {
+            for child_node in &style_node.node.children {
+                if let NodeType::Text(text) = &child_node.node_type {
+                    let d = layout_box.dimensions;
+                    let x = (d.content.x + d.padding.left + 5.0) as i32;
+                    let y = (d.content.y + d.padding.top + 5.0) as i32;
+                    
+                    let text_color = Rgba([0, 0, 0, 255]);
+                    let font_size = 16.0;
+                    
+                    self.text_drawer.draw_text(&mut self.image, text.trim(), x, y, font_size, text_color);
+                }
+            }
         }
     }
 
