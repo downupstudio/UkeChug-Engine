@@ -1,5 +1,5 @@
 use image::{RgbaImage, Rgba};
-use ab_glyph::{FontRef, PxScale};
+use ab_glyph::{FontRef, PxScale, Font, ScaleFont};
 use imageproc::drawing::draw_text_mut;
 
 pub struct TextDrawer<'a> {
@@ -22,8 +22,45 @@ impl<'a> TextDrawer<'a> {
         y: i32,
         size: f32,
         color: Rgba<u8>,
+        max_width: f32,
     ) {
         let scale = PxScale::from(size);
-        draw_text_mut(image, color, x, y, scale, &self.font, text);
+        let scaled_font = self.font.as_scaled(scale);
+        
+        let words: Vec<&str> = text.split_whitespace().collect();
+        let mut current_line = String::new();
+        let mut current_y = y;
+        let line_height = (size * 1.5) as i32;
+        
+        for word in words {
+            let test_line = if current_line.is_empty() {
+                word.to_string()
+            } else {
+                format!("{} {}", current_line, word)
+            };
+            
+            let width = self.measure_text(&test_line, &scaled_font);
+            
+            if width > max_width && !current_line.is_empty() {
+                draw_text_mut(image, color, x, current_y, scale, &self.font, &current_line);
+                current_line = word.to_string();
+                current_y += line_height;
+            } else {
+                current_line = test_line;
+            }
+        }
+        
+        if !current_line.is_empty() {
+            draw_text_mut(image, color, x, current_y, scale, &self.font, &current_line);
+        }
+    }
+    
+    fn measure_text(&self, text: &str, scaled_font: &ab_glyph::PxScaleFont<&FontRef>) -> f32 {
+        let mut width = 0.0;
+        for ch in text.chars() {
+            let glyph = scaled_font.scaled_glyph(ch);
+            width += scaled_font.h_advance(glyph.id);
+        }
+        width
     }
 }

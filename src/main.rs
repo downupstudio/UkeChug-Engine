@@ -29,7 +29,7 @@ struct Args {
     #[arg(short, long, default_value = "800", help = "Image width in pixels")]
     width: u32,
     
-    #[arg(short, long, default_value = "600", help = "Image height in pixels")]
+    #[arg(short = 'H', long, default_value = "600", help = "Image height in pixels")]
     height: u32,
 }
 

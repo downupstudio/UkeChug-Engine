@@ -1,4 +1,3 @@
-pub mod text_renderer;
 pub mod image_renderer;
 pub mod text_drawer;
 

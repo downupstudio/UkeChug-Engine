@@ -84,23 +84,28 @@ impl<'a> ImageRenderer<'a> {
 
     fn render_text(&mut self, layout_box: &LayoutBox) {
         if let BoxType::BlockNode(style_node) | BoxType::InlineNode(style_node) = &layout_box.box_type {
+            if let NodeType::Element(elem) = &style_node.node.node_type {
+                println!("Rendering text for <{}>", elem.tag_name);
+            }
+            
             for child_node in &style_node.node.children {
                 if let NodeType::Text(text) = &child_node.node_type {
                     let d = layout_box.dimensions;
-                    let border_width = self.get_border_width(layout_box) as f32;
                     
-                    let content_box_x = d.content.x + border_width + d.padding.left;
-                    let content_box_y = d.content.y + border_width + d.padding.top;
-                    let content_box_height = d.content.height;
+                    println!("  Box dimensions:");
+                    println!("    content: x={}, y={}, w={}, h={}", d.content.x, d.content.y, d.content.width, d.content.height);
+                    println!("    padding: l={}, t={}", d.padding.left, d.padding.top);
+                    
+                    let x = (d.content.x + d.padding.left + 10.0) as i32;
+                    let y = (d.content.y + d.padding.top + 10.0) as i32;
+                    let max_width = d.content.width.max(100.0) - 20.0;
+                    
+                    println!("    text position: x={}, y={}, max_width={}", x, y, max_width);
                     
                     let font_size = self.get_font_size(style_node);
-                    
-                    let x = (content_box_x + 10.0) as i32;
-                    let y = (content_box_y + (content_box_height / 2.0) - (font_size / 2.0)) as i32;
-                    
                     let text_color = self.get_text_color(style_node);
                     
-                    self.text_drawer.draw_text(&mut self.image, text.trim(), x, y, font_size, text_color);
+                    self.text_drawer.draw_text(&mut self.image, text.trim(), x, y, font_size, text_color, max_width);
                 }
             }
         }
