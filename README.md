@@ -24,7 +24,7 @@ A browser rendering engine built from scratch in Rust that parses HTML and CSS a
 ### Build
 
 ```bash
-git clone https://github.com/yourusername/UkeChug.git
+git clone https://github.com/downupstudio/UkeChug.git
 cd UkeChug
 cargo build --release
 ```
