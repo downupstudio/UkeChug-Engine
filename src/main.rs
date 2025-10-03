@@ -8,7 +8,7 @@ mod render;
 use html::HTMLParser;
 use css::CSSParser;
 use dom::DOMTree;
-use style::StyleEngine;
+use style::{StyleEngine, style_tree};
 use layout::LayoutEngine;
 use render::RenderEngine;
 
@@ -21,75 +21,63 @@ fn main() {
     println!("Status: Initializing...");
     println!();
     
-    test_html_parsing();
-    
-    println!();
-    
-    test_css_parsing();
+    test_style_matching();
     
     println!();
     println!("Engine initialized successfully!");
     println!("========================================");
 }
 
-fn test_html_parsing() {
-    println!("Testing HTML Parser:");
+fn test_style_matching() {
+    println!("Testing Style Matching:");
     println!();
     
-    let test_html = "<html><head><title>UkeChug Test</title></head><body><h1>Hello World</h1><p>This is a test paragraph.</p><div><span>Nested content</span></div></body></html>";
+    let test_html = "<html><body><div id=\"main\" class=\"container\"><h1>Hello World</h1><p class=\"highlight\">This is a test.</p></div></body></html>";
+    
+    let test_css = "h1 { color: #ff0000; font-size: 24px; display: block; } p { color: #333333; font-size: 16px; display: block; } .highlight { background: #ffff00; } #main { width: 800px; display: block; } .container { margin: 20px; }";
     
     let mut html_parser = HTMLParser::new();
     let root_node = html_parser.parse(test_html);
     
-    let mut dom = DOMTree::new();
-    dom.build(root_node);
-    
-    dom.print_tree();
-    
-    println!();
-    println!("✓ HTML parsing complete!");
-}
-
-fn test_css_parsing() {
-    println!("Testing CSS Parser:");
-    println!();
-    
-    let test_css = "h1 { color: #ff0000; font-size: 24px; } p { color: #333333; font-size: 16px; margin: 10px; } .highlight { background: #ffff00; } #main { width: 800px; }";
-    
     let css_parser = CSSParser::new();
     let stylesheet = css_parser.parse(test_css);
     
-    println!("  [CSS] Parsed {} rules:", stylesheet.rules.len());
+    println!("  [Style] Creating styled tree...");
+    let styled_root = style_tree(&root_node, &stylesheet);
     
-    for (i, rule) in stylesheet.rules.iter().enumerate() {
-        println!();
-        println!("  Rule {}:", i + 1);
-        
-        print!("    Selectors: ");
-        for (j, selector) in rule.selectors.iter().enumerate() {
-            if j > 0 { print!(", "); }
-            match selector {
-                css::Selector::Simple(s) => {
-                    if let Some(ref tag) = s.tag_name {
-                        print!("{}", tag);
-                    }
-                    if let Some(ref id) = s.id {
-                        print!("#{}", id);
-                    }
-                    for class in &s.classes {
-                        print!(".{}", class);
-                    }
-                }
-            }
-        }
-        println!();
-        
-        println!("    Declarations:");
-        for decl in &rule.declarations {
-            println!("      {}: {:?}", decl.name, decl.value);
-        }
-    }
+    println!("  [Style] Styled tree created!");
+    println!();
+    
+    print_styled_tree(&styled_root, 0);
     
     println!();
-    println!("✓ CSS parsing complete!");
+    println!("✓ Style matching complete!");
+}
+
+fn print_styled_tree(node: &style::StyledNode, indent: usize) {
+    let indent_str = "  ".repeat(indent);
+    
+    match node.node.node_type {
+        dom::NodeType::Element(ref elem) => {
+            println!("{}Element: <{}>", indent_str, elem.tag_name);
+            
+            if !node.specified_values.is_empty() {
+                println!("{}  Styles:", indent_str);
+                for (name, value) in &node.specified_values {
+                    println!("{}    {}: {:?}", indent_str, name, value);
+                }
+            }
+            
+            for child in &node.children {
+                print_styled_tree(child, indent + 1);
+            }
+        }
+        dom::NodeType::Text(ref text) => {
+            let trimmed = text.trim();
+            if !trimmed.is_empty() {
+                println!("{}Text: \"{}\"", indent_str, trimmed);
+            }
+        }
+        dom::NodeType::Comment(_) => {}
+    }
 }

@@ -1,3 +1,7 @@
+pub mod styled_node;
+
+pub use styled_node::{StyledNode, PropertyMap, Display, style_tree};
+
 pub struct StyleEngine;
 
 impl StyleEngine {
