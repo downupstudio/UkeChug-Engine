@@ -13,6 +13,7 @@ A browser rendering engine built from scratch in Rust that parses HTML and CSS a
   - Background colors
   - Borders with configurable colors and widths
   - Text rendering with TrueType font support
+  - **Automatic word wrapping** for long text content
 
 ## Installation
 
@@ -145,6 +146,7 @@ UkeChug/
 - Limited CSS property support
 - No network fetching
 - Single-threaded rendering
+- **Text elements require explicit height in CSS** (no automatic height calculation yet)
 
 ## Future Roadmap
 
