@@ -1,0 +1,6 @@
+html { display: block; width: 780px; }
+body { display: block; width: 700px; background-color: #f0f0f0; }
+div { display: block; width: 600px; background-color: white; margin: 20px; padding: 15px; border-width: 2px; border-color: #2c3e50; }
+h1 { display: block; color: #e74c3c; font-size: 36px; margin: 10px; }
+h2 { display: block; color: #3498db; font-size: 28px; margin: 10px; }
+p { display: block; color: #34495e; font-size: 16px; margin: 10px; }
