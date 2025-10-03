@@ -10,7 +10,7 @@ use css::CSSParser;
 use dom::DOMTree;
 use style::{StyleEngine, style_tree};
 use layout::{LayoutEngine, layout_tree, Dimensions, Rect};
-use render::RenderEngine;
+use render::{RenderEngine, TextRenderer, ImageRenderer};
 
 fn main() {
     println!("========================================");
@@ -21,20 +21,20 @@ fn main() {
     println!("Status: Initializing...");
     println!();
     
-    test_layout();
+    test_image_rendering();
     
     println!();
     println!("Engine initialized successfully!");
     println!("========================================");
 }
 
-fn test_layout() {
-    println!("Testing Layout Engine:");
+fn test_image_rendering() {
+    println!("Testing Image Rendering:");
     println!();
     
-    let test_html = "<html><body><div id=\"main\"><h1>Hello World</h1><p>This is a paragraph with some text.</p><div><span>Nested content here</span></div></div></body></html>";
+    let test_html = "<html><body><div><h1>Header</h1></div><div><p>Paragraph</p></div></body></html>";
     
-    let test_css = "body { display: block; margin: 0px; } div { display: block; padding: 10px; margin: 5px; } h1 { display: block; font-size: 24px; margin: 10px; } p { display: block; margin: 10px; padding: 5px; } span { display: inline; }";
+    let test_css = "html { display: block; width: 780px; } body { display: block; width: 700px; background: white; } div { display: block; width: 600px; height: 100px; background: #e0e0e0; margin: 10px; } h1 { display: block; width: 500px; height: 50px; background: #ffcccc; margin: 10px; } p { display: block; width: 500px; height: 50px; background: #ccccff; margin: 10px; }";
     
     let mut html_parser = HTMLParser::new();
     let root_node = html_parser.parse(test_html);
@@ -53,44 +53,16 @@ fn test_layout() {
     
     let layout_root = layout_tree(&styled_root, viewport);
     
-    println!("  [Layout] Layout tree created!");
-    println!();
+    println!("  [Render] Rendering to image...");
     
-    print_layout_tree(&layout_root, 0);
+    let mut image_renderer = ImageRenderer::new(800, 600);
+    image_renderer.render(&layout_root);
     
-    println!();
-    println!("✓ Layout calculation complete!");
-}
-
-fn print_layout_tree(layout_box: &layout::LayoutBox, indent: usize) {
-    let indent_str = "  ".repeat(indent);
-    
-    let box_type_name = match layout_box.box_type {
-        layout::BoxType::BlockNode(node) => {
-            match node.node.node_type {
-                dom::NodeType::Element(ref elem) => format!("Block <{}>", elem.tag_name),
-                _ => "Block".to_string(),
-            }
-        }
-        layout::BoxType::InlineNode(node) => {
-            match node.node.node_type {
-                dom::NodeType::Element(ref elem) => format!("Inline <{}>", elem.tag_name),
-                _ => "Inline".to_string(),
-            }
-        }
-        layout::BoxType::AnonymousBlock => "AnonymousBlock".to_string(),
-    };
-    
-    let d = &layout_box.dimensions;
-    println!("{}{}", indent_str, box_type_name);
-    println!("{}  Content: x={:.1}, y={:.1}, w={:.1}, h={:.1}", 
-        indent_str, d.content.x, d.content.y, d.content.width, d.content.height);
-    println!("{}  Padding: l={:.1}, r={:.1}, t={:.1}, b={:.1}", 
-        indent_str, d.padding.left, d.padding.right, d.padding.top, d.padding.bottom);
-    println!("{}  Margin: l={:.1}, r={:.1}, t={:.1}, b={:.1}", 
-        indent_str, d.margin.left, d.margin.right, d.margin.top, d.margin.bottom);
-    
-    for child in &layout_box.children {
-        print_layout_tree(child, indent + 1);
+    match image_renderer.save("output.png") {
+        Ok(_) => println!("  [Render] Image saved to output.png"),
+        Err(e) => println!("  [Render] Error saving image: {}", e),
     }
+    
+    println!();
+    println!("✓ Image rendering complete!");
 }

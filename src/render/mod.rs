@@ -1,3 +1,9 @@
+pub mod text_renderer;
+pub mod image_renderer;
+
+pub use text_renderer::TextRenderer;
+pub use image_renderer::ImageRenderer;
+
 pub struct RenderEngine;
 
 impl RenderEngine {
