@@ -11,12 +11,15 @@ use style::style_tree;
 use layout::{layout_tree, Dimensions};
 use render::ImageRenderer;
 use std::fs;
-use clap::Parser;
+use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(name = "UkeChug Browser Engine")]
 #[command(about = "A browser engine that renders HTML/CSS to PNG images", long_about = None)]
 struct Args {
+    #[command(subcommand)]
+    command: Option<Commands>,
+    
     #[arg(help = "HTML file to render")]
     html_file: Option<String>,
     
@@ -33,6 +36,15 @@ struct Args {
     height: u32,
 }
 
+#[derive(Subcommand)]
+enum Commands {
+    #[command(about = "Delete a file")]
+    Clean {
+        #[arg(help = "File to delete")]
+        file: String,
+    },
+}
+
 fn main() {
     let args = Args::parse();
     
@@ -43,6 +55,11 @@ fn main() {
     println!("Version: 0.1.0");
     println!();
     
+    if let Some(Commands::Clean { file }) = args.command {
+        clean_file(&file);
+        return;
+    }
+    
     let html_file = args.html_file.unwrap_or_else(|| "test.html".to_string());
     let css_file = args.css_file.unwrap_or_else(|| "test.css".to_string());
     
@@ -50,6 +67,17 @@ fn main() {
     
     println!();
     println!("========================================");
+}
+
+fn clean_file(file: &str) {
+    if std::path::Path::new(file).exists() {
+        match fs::remove_file(file) {
+            Ok(_) => println!("✓ Deleted: {}", file),
+            Err(e) => println!("✗ Could not delete {}: {}", file, e),
+        }
+    } else {
+        println!("✗ File not found: {}", file);
+    }
 }
 
 fn render_from_files(html_file: &str, css_file: &str, output_file: &str, width: u32, height: u32) {
