@@ -52,7 +52,21 @@ impl HTMLParser {
         assert_eq!(self.consume_char(), '<');
         let tag_name = self.parse_tag_name();
         let attrs = self.parse_attributes();
-        assert_eq!(self.consume_char(), '>');
+        
+        let next_char = self.consume_char();
+        
+        if next_char == '/' {
+            assert_eq!(self.consume_char(), '>');
+            return Node::element(tag_name, attrs, Vec::new());
+        }
+        
+        assert_eq!(next_char, '>');
+
+        let is_self_closing = matches!(tag_name.as_str(), "br" | "img" | "input" | "hr");
+        
+        if is_self_closing {
+            return Node::element(tag_name, attrs, Vec::new());
+        }
 
         let children = self.parse_nodes();
 
@@ -72,7 +86,7 @@ impl HTMLParser {
         let mut attributes = HashMap::new();
         loop {
             self.consume_whitespace();
-            if self.next_char() == '>' {
+            if self.next_char() == '>' || self.next_char() == '/' {
                 break;
             }
             let (name, value) = self.parse_attr();

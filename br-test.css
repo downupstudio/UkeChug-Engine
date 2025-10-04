@@ -1,0 +1,5 @@
+html { display: block; width: 780px; }
+body { display: block; width: 700px; background-color: #f0f0f0; }
+div { display: block; width: 600px; background-color: white; margin: 20px; padding: 20px; border-width: 2px; border-color: #333333; }
+h1 { display: block; color: #e74c3c; font-size: 32px; margin: 10px; }
+p { display: block; color: #34495e; font-size: 16px; margin: 10px; }

@@ -63,4 +63,37 @@ impl<'a> TextDrawer<'a> {
         }
         width
     }
+    
+    pub fn calculate_text_height(&self, text: &str, size: f32, max_width: f32) -> f32 {
+        let scale = PxScale::from(size);
+        let scaled_font = self.font.as_scaled(scale);
+        
+        let words: Vec<&str> = text.split_whitespace().collect();
+        let mut current_line = String::new();
+        let mut line_count = 0;
+        let line_height = size * 1.5;
+        
+        for word in words {
+            let test_line = if current_line.is_empty() {
+                word.to_string()
+            } else {
+                format!("{} {}", current_line, word)
+            };
+            
+            let width = self.measure_text(&test_line, &scaled_font);
+            
+            if width > max_width && !current_line.is_empty() {
+                line_count += 1;
+                current_line = word.to_string();
+            } else {
+                current_line = test_line;
+            }
+        }
+        
+        if !current_line.is_empty() {
+            line_count += 1;
+        }
+        
+        line_count as f32 * line_height
+    }
 }

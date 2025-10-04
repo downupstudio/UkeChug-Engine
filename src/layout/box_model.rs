@@ -252,6 +252,23 @@ impl<'a> LayoutBox<'a> {
     fn calculate_block_height(&mut self) {
         if let Some(Value::Length(h, crate::css::Unit::Px)) = self.get_style_node().value("height") {
             self.dimensions.content.height = *h;
+        } else {
+            let font_size = self.get_style_node()
+                .value("font-size")
+                .and_then(|v| match v {
+                    Value::Length(s, _) => Some(*s),
+                    _ => None,
+                })
+                .unwrap_or(16.0);
+            
+            let has_text = self.get_style_node().node.children.iter().any(|child| {
+                matches!(child.node_type, crate::dom::NodeType::Text(_))
+            });
+            
+            if has_text {
+                let estimated_lines = 2.0;
+                self.dimensions.content.height = font_size * 1.5 * estimated_lines;
+            }
         }
     }
 }
