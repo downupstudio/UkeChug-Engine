@@ -25,7 +25,7 @@ A browser rendering engine built from scratch in Rust that parses HTML and CSS a
 ### Build
 
 ```bash
-git clone https://github.com/downupstudio/UkeChug.git
+git clone https://github.com/yourusername/UkeChug.git
 cd UkeChug
 cargo build --release
 ```
@@ -65,8 +65,20 @@ cargo run index.html style.css -o result.png -w 1024 -h 768
 
 - `-o, --output <FILE>` - Output PNG file (default: output.png)
 - `-w, --width <PIXELS>` - Image width (default: 800)
-- `-h, --height <PIXELS>` - Image height (default: 600)
+- `-H, --height <PIXELS>` - Image height (default: 600)
 - `--help` - Show help information
+
+### Clean Command
+
+Delete output files:
+```bash
+cargo run clean <filename>
+```
+
+Example:
+```bash
+cargo run clean output.png
+```
 
 ## Example
 
